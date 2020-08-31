@@ -1,0 +1,15 @@
+C = gcc
+CFLAGS = -Wall -std=gnu99
+TARGET = client
+OBJ = client.o FileIO.o ACCSockets.o clientApi.o
+
+all: $(TARGET)
+$(TARGET): $(OBJ)
+	$(CC) $(CFLAGS) $(OBJ) -o $(TARGET) 
+
+%.o: %.c 
+	$(CC) $(CFLAGS) -c $< -o $@ 
+
+.PHONY: clean
+clean:
+	rm $(OBJ) $(TARGET)
