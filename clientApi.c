@@ -6,12 +6,12 @@
 void getInput(char* arg1, char* arg2, char* arg3)
 {
     //reset all the strings
-    memset(arg1, 0, sizeof(char)*BUFFER_SIZE);
-    memset(arg2, 0, sizeof(char)*BUFFER_SIZE);
-    memset(arg3, 0, sizeof(char)*BUFFER_SIZE);
+    memset(arg1, 0, BUFFER_SIZE);
+    memset(arg2, 0, BUFFER_SIZE);
+    memset(arg3, 0, BUFFER_SIZE);
 
     char temp[BUFFER_SIZE];
-    memset(temp, 0, sizeof(char)*BUFFER_SIZE);
+    memset(temp, 0, sizeof(temp));
     fgets(temp, BUFFER_SIZE, stdin);
     temp[strcspn(temp, "\n")] = 0;
     printf("%s\n", temp);
@@ -43,7 +43,7 @@ int storeFileClient(char* fileName, int sockfd)
  
     //Get the md5 key and display it
     char buffer[BUFFER_SIZE];
-    memset(buffer, 0, sizeof(char)*BUFFER_SIZE);
+    memset(buffer, 0, sizeof(buffer));
     recieveMessage(buffer, sockfd);
 
     printf("Key: %s\n", buffer);
@@ -58,8 +58,9 @@ int getFileClient(char* md5, char* fileName, int sockfd)
     sendMessage(md5, sockfd); 
 
     char message[BUFFER_SIZE];
-    memset(message, 0, sizeof(char)*BUFFER_SIZE);
+    memset(message, 0, BUFFER_SIZE);
     recieveMessage(message, sockfd);
+    printf("%s\n",message);
 
     //If the file exists
     if (strncmp("exists",message,6) == 0)

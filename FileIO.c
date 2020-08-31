@@ -40,7 +40,7 @@ bool fileExists(FileList* fileList, char* md5)
 bool deleteFile(FileList* fileList, char* md5)
 {
     char fileName[MAX_FILE_SIZE];
-    memset(fileName, 0, sizeof(char)*MAX_FILE_SIZE); 
+    memset(fileName, 0, sizeof(fileName)); 
 
     for (int i = 0; i < fileList->size; i++)
     {
@@ -109,8 +109,8 @@ void getStorageFileList(FileList* fileList)
 
                 getMD5Sum(fileLocation,md5sum);
                 strcpy(fileList->md5List[i++], md5sum);
-                memset(fileLocation, 0, sizeof(char)*256); 
-                memset(md5sum, 0, sizeof(char)*(MD5SIZE+1)); 
+                memset(fileLocation, 0, sizeof(fileLocation)); 
+                memset(md5sum, 0, sizeof(md5sum)); 
 
             }
     closedir(d);
@@ -133,7 +133,7 @@ void initialiseFileList(FileList* fileList, int size)
 void addStoragePrefixToFileName(char* fileName, int flag)
 {
     char temp[MAX_FILE_SIZE];
-    memset(temp, 0, sizeof(char)*MAX_FILE_SIZE); 
+    memset(temp, 0, sizeof(temp)); 
 
     strcat(temp, "storage/");
     if (flag == 1)
@@ -142,6 +142,6 @@ void addStoragePrefixToFileName(char* fileName, int flag)
     if (flag == 1)
         strcat(temp, "'");
    
-    memset(fileName, 0, sizeof(char)*STR_SIZE);
+    memset(fileName, 0, sizeof(fileName));
     strcpy(fileName, temp);
 }

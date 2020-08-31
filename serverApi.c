@@ -8,7 +8,7 @@
 command getCommandFromClient(int sockfd)
 {
     char buffer[BUFFER_SIZE];
-    memset(buffer, 0, sizeof(char)*BUFFER_SIZE);
+    memset(buffer, 0, sizeof(buffer));
 
     recieveMessage(buffer, sockfd);
     toLower(buffer);
@@ -32,7 +32,7 @@ int storeFileServer(int sockfd)
     recieveFile("storage/test", sockfd);
 
     char md5[BUFFER_SIZE];
-    memset(md5, 0, sizeof(char)*BUFFER_SIZE);
+    memset(md5, 0, sizeof(md5));
     getMD5Sum("storage/test", md5);
 
     sendMessage(md5, sockfd);
@@ -43,8 +43,9 @@ int storeFileServer(int sockfd)
 int getFileServer(FileList* fileList, int sockfd)
 {
     char md5[BUFFER_SIZE];
-    memset(md5, 0, sizeof(char)*BUFFER_SIZE);
+    memset(md5, 0, sizeof(md5));
     recieveMessage(md5, sockfd);
+    printf("%s\n",md5);
 
     if (!fileExists(fileList, md5))
     {
