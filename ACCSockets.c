@@ -11,12 +11,6 @@
 #include "ACCSockets.h"
 #include <stdlib.h>
 
-void sendStringLength(char* str, int sockfd)
-{
-    char str_len[BUFFER_SIZE];
-    sprintf(str_len, "%d", (int)strlen(str));
-    send(sockfd, str_len, BUFFER_SIZE,0);
-}
 
 void sendFileSize(FILE *f, int sockfd)
 {
@@ -37,26 +31,23 @@ void sendFileSize(FILE *f, int sockfd)
 
 int sendMessage(char* message, int sockfd)
 {
-    int bytesToSend;
     int bytesSent;
     int msgLen = strlen(message);
+    char charToSend;
     int i = 0;
-    char buffer[BUFFER_SIZE];
 
-    //send the length
-    sendStringLength(message, sockfd);
-
-    while (i*BUFFER_SIZE < msgLen)
+    while (msgLen > i)
     {
-        bytesToSend = msgLen - i*BUFFER_SIZE;
-        bytesToSend = bytesToSend >= BUFFER_SIZE ? BUFFER_SIZE : bytesToSend;
-        strncpy(buffer, message+i*BUFFER_SIZE, bytesToSend);
-
-        if ((bytesSent = send(sockfd, buffer, bytesToSend,0)) < bytesToSend)
+        charToSend = *(message + i++);
+        if (charToSend == 0 || charToSend == '\n')
+            break;
+        else if ((bytesSent = send(sockfd, &charToSend, 1,0)) <= 0)
             return -1;
-
-        i++;
     }
+    
+    //Send 0 to indicate the message is complete
+    char null = 0;
+    send(sockfd, &null, 1,0);
 
     printf("Sent message: %s\n", message);
 
@@ -65,18 +56,21 @@ int sendMessage(char* message, int sockfd)
 
 int recieveMessage(char* dest, int sockfd)
 {
-    char buffer[BUFFER_SIZE];
-    int bytesRead;
+    char charRecieved;
+    int bytesRecieved;
+    int i = 0;
 
-    int sizeOfMessage = 0;
-    char str_sizeOfMessage[BUFFER_SIZE];
-    recv(sockfd, str_sizeOfMessage, BUFFER_SIZE, 0);
-    sizeOfMessage = atoi(str_sizeOfMessage);
-
-    while(sizeOfMessage > 0 && (bytesRead =recv(sockfd, buffer, BUFFER_SIZE, 0)) > 0)
+    while((bytesRecieved = recv(sockfd, &charRecieved, 1, 0)) > 0)
     {
-        strncat(dest, buffer, bytesRead);
-        sizeOfMessage -= bytesRead;
+        if (charRecieved == 0 || charRecieved == '\n')
+        {
+            *(dest + i++) = 0;
+            break;
+
+        }
+        else
+            *(dest + i++) = charRecieved;
+
     }
 
     printf("Recieved message: %s\n", dest);
