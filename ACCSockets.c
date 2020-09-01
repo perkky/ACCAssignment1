@@ -81,19 +81,19 @@ int recieveMessage(char* dest, int sockfd)
 int sendFile(char* fileName, int sockfd)
 {
     FILE* f = fopen(fileName, "r");
-    //Send file size?
-    char buffer[BUFFER_SIZE];
     int bytesRead;
-    int bytesSent;
 
-    sendFileSize(f, sockfd);
+    char charToSend;
 
-    while (( bytesRead = fread(buffer, sizeof(char), BUFFER_SIZE, f)) > 0 )
+    while (( bytesRead = fread(&charToSend, sizeof(char), 1, f)) > 0 )
     {
-        if ( (bytesSent = send(sockfd, buffer, bytesRead, 0)) < bytesRead )
+        if (send(sockfd, &charToSend, 1, 0) < 0 )
                 return -1;
-        printf("Sent line: %d\n", bytesRead);
     }
+
+    //Send 0 to indicate the message is complete
+    char null = 0;
+    send(sockfd, &null, 1, 0); 
 
     return fclose(f);
 }
@@ -102,20 +102,14 @@ int recieveFile(char* fileName, int sockfd)
 {
     FILE* f = fopen(fileName, "w");
 
-    char buffer[BUFFER_SIZE];
+    char charRecieved;
     int bytesRead;
 
-    int sizeOfMessage = 0;
-    char str_sizeOfMessage[BUFFER_SIZE];
-    recv(sockfd, str_sizeOfMessage, BUFFER_SIZE, 0);
-    sizeOfMessage = atoi(str_sizeOfMessage);
-    printf("File size: %d\n", sizeOfMessage);
-
-    while(sizeOfMessage > 0 && (bytesRead =recv(sockfd, buffer, BUFFER_SIZE, 0)) > 0)
+    while((bytesRead = recv(sockfd, &charRecieved, 1, 0)) > 0)
     {
-        fwrite(buffer, sizeof(char), bytesRead, f);
-        sizeOfMessage -= bytesRead;
-        printf("Size left: %d\n", sizeOfMessage);
+        if (charRecieved == 0)
+            break;
+        fwrite(&charRecieved, sizeof(char), 1, f);
     }
 
     return fclose(f);

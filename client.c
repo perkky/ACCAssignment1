@@ -42,6 +42,10 @@ int main(int argc, char* argv[])
         storeFileClient(in2, sockfd);
     else if (strncmp("get", in1, 3) == 0)
         getFileClient(in2, in3, sockfd);
+    else if (strncmp("delete", in1, 6) == 0)
+        deleteFileClient(in2, sockfd);
+    else if (strncmp("quit", in1, 4) == 0)
+        quitClient(sockfd);
     
     close(sockfd);
 

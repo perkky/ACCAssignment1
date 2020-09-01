@@ -27,13 +27,29 @@ command getCommandFromClient(int sockfd)
         return INVALID;
 }
 
-int storeFileServer(int sockfd)
+int quitServer(int sockfd)
 {
-    recieveFile("storage/test", sockfd);
+    sendMessage("Thank you for using our anonymous storage", sockfd);
+
+    return 0;
+}
+
+int storeFileServer(FileList* fileList, int sockfd)
+{
+    char fileName[BUFFER_SIZE];
+    memset(fileName, 0, BUFFER_SIZE);
+    getRandomFileName(fileName, 5);
+
+    while (fileExistsName(fileList, fileName))
+        getRandomFileName(fileName, 5);
+    
+    addStoragePrefixToFileName(fileName, 0);
+    recieveFile(fileName, sockfd);
 
     char md5[BUFFER_SIZE];
     memset(md5, 0, BUFFER_SIZE);
-    getMD5Sum("storage/test", md5);
+
+    getMD5Sum(fileName, md5);
 
     sendMessage(md5, sockfd);
 
@@ -78,6 +94,7 @@ int deleteFileServer(FileList* fileList, int sockfd)
     }
     else
     {
+        deleteFile(fileList, md5);
         sendMessage("DELETE: File deleted\n", sockfd); 
         return 0;
     }

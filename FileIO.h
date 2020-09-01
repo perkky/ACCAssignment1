@@ -8,7 +8,9 @@ typedef struct FileList
 } FileList;
 
 
+void getRandomFileName(char* dest, int len);
 bool fileExists(FileList* fileList, char* md5);
+bool fileExistsName(FileList* fileList, char* fileName);
 void getFileName(FileList* fileList, char* md5, char* fileName);
 bool deleteFile(FileList* fileList, char* md5);
 void getMD5Sum(char* fileLocation, char* md5sum);

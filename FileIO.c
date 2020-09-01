@@ -9,6 +9,18 @@
 const int MD5SIZE = 32;
 const int MAX_FILE_SIZE = 256;
 
+void getRandomFileName(char* dest, int len)
+{
+    static const char alphanum[] = "0123456789";
+    strcpy(dest,"file_");
+
+    for (int i = 0; i < len; i++)
+    {
+        *(dest+5+i) = alphanum[rand() % sizeof(alphanum)-1];
+    }
+
+}
+
 void toLower(char* str)
 {
     for (int i = 0; i < strlen(str); i++)
@@ -31,6 +43,17 @@ bool fileExists(FileList* fileList, char* md5)
     for (int i = 0; i < fileList->size; i++)
     {
         if (strncmp(md5, fileList->md5List[i],MD5SIZE) == 0)
+            return true;
+    }
+
+    return false;
+}
+
+bool fileExistsName(FileList* fileList, char* fileName)
+{
+    for (int i = 0; i < fileList->size; i++)
+    {
+        if (strcmp(fileName, fileList->fileList[i]) == 0)
             return true;
     }
 

@@ -35,16 +35,18 @@ int main(int argc, char* argv[])
     switch (getCommandFromClient(id))
     {
         case STORE:
-            storeFileServer(id);
+            storeFileServer(&fl, id);
             break;
         case GET:
             getFileServer(&fl, id);
             break;
         case DELETE:
+            deleteFileServer(&fl, id);
             break;
         case HISTORY:
             break;
         case QUIT:
+            quitServer(id);
             break;
         case INVALID:
             break;

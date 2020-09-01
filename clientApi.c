@@ -34,6 +34,18 @@ void getInput(char* arg1, char* arg2, char* arg3)
 
 }
 
+int quitClient(int sockfd)
+{
+    //Send the command to the server
+    sendMessage("QUIT", sockfd); 
+
+    char message[BUFFER_SIZE];
+    recieveMessage(message, sockfd);
+
+    printf("%s\n", message);
+    return 0;
+} 
+
 int storeFileClient(char* fileName, int sockfd)
 {
     //Send the command to the server

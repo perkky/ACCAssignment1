@@ -12,6 +12,7 @@ typedef enum command
 } command;
 
 command getCommandFromClient(int sockfd);
-int storeFileServer(int sockfd);
+int quitServer(int sockfd);
+int storeFileServer(FileList* fileList, int sockfd);
 int getFileServer(FileList* fileList, int sockfd);
 int deleteFileServer(FileList* fileList, int sockfd);
