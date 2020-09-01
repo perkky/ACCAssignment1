@@ -16,5 +16,6 @@ bool deleteFile(FileList* fileList, char* md5);
 void getMD5Sum(char* fileLocation, char* md5sum);
 void getStorageFileList(FileList* fileList);
 void initialiseFileList(FileList* fileList, int size);
+void freeFileList(FileList* fileList);
 void addStoragePrefixToFileName(char* fileName, int flag);
 void toLower(char* str);

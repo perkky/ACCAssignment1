@@ -28,32 +28,36 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    sendMessage("18811931> ", id);
-    printf("message sent\n");
-
-    //Get command
-    switch (getCommandFromClient(id))
+    int exit = 0;
+    while (!exit)
     {
-        case STORE:
-            storeFileServer(&fl, id);
-            break;
-        case GET:
-            getFileServer(&fl, id);
-            break;
-        case DELETE:
-            deleteFileServer(&fl, id);
-            break;
-        case HISTORY:
-            break;
-        case QUIT:
-            quitServer(id);
-            break;
-        case INVALID:
-            break;
-        default:
-            break;
+        sendMessage("18811931> ", id);
+        printf("message sent\n");
+
+        //Get command
+        switch (getCommandFromClient(id))
+        {
+            case STORE:
+                storeFileServer(&fl, id);
+                break;
+            case GET:
+                getFileServer(&fl, id);
+                break;
+            case DELETE:
+                deleteFileServer(&fl, id);
+                break;
+            case HISTORY:
+                break;
+            case QUIT:
+                quitServer(id);
+                exit = 1;
+                break;
+            case INVALID:
+                break;
+            default:
+                break;
+        }
     }
-        
 
     close(id);
 

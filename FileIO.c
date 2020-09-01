@@ -151,6 +151,18 @@ void initialiseFileList(FileList* fileList, int size)
     }
 }
 
+void freeFileList(FileList* fileList)
+{
+    for (int i = 0; i < fileList->size; i++)
+    {
+        free(fileList->fileList[i]);
+        free(fileList->md5List[i]); 
+    }
+
+    free(fileList->fileList);
+    free(fileList->md5List); 
+}
+
 //Add the "storage/" prefix to the file name
 //Flag - 0 to get the raw name, 1 to get it encapsulated in ' '
 void addStoragePrefixToFileName(char* fileName, int flag)

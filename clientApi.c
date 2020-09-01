@@ -2,6 +2,16 @@
 #include <string.h>
 #include "ACCSockets.h"
 #include "FileIO.h"
+#include <signal.h>
+#include <stdlib.h>
+
+void connectionLost(int signo)
+{
+    if (signo == SIGPIPE)
+        printf("Error: Connection lost\n");
+
+    exit(1);
+}
 
 void getInput(char* arg1, char* arg2, char* arg3)
 {
@@ -64,7 +74,7 @@ int storeFileClient(char* fileName, int sockfd)
 }
 
 int getFileClient(char* md5, char* fileName, int sockfd)
-{
+{ 
     sendMessage("GET", sockfd); 
 
     sendMessage(md5, sockfd); 
@@ -72,7 +82,8 @@ int getFileClient(char* md5, char* fileName, int sockfd)
 
     char message[BUFFER_SIZE];
     memset(message, 0, BUFFER_SIZE);
-    recieveMessage(message, sockfd);
+    if (recieveMessage(message, sockfd) == -1)
+        printf("error\n");
     printf("%s\n",message);
 
     //If the file exists

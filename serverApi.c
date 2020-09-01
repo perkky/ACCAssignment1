@@ -52,6 +52,9 @@ int storeFileServer(FileList* fileList, int sockfd)
     getMD5Sum(fileName, md5);
 
     sendMessage(md5, sockfd);
+    
+    freeFileList(fileList);
+    getStorageFileList(fileList);
 
     return 0;
 }

@@ -11,6 +11,7 @@
 #include "ACCSockets.h"
 #include <stdlib.h>
 
+struct timeval TIMEOUT;
 
 void sendFileSize(FILE *f, int sockfd)
 {
@@ -58,9 +59,15 @@ int recieveMessage(char* dest, int sockfd)
 {
     char charRecieved;
     int bytesRecieved;
+    int selectReturn;
     int i = 0;
 
-    while((bytesRecieved = recv(sockfd, &charRecieved, 1, 0)) > 0)
+    fd_set set;
+    FD_ZERO(&set);
+    FD_SET(sockfd, &set);
+    TIMEOUT.tv_sec = 120;
+
+    while( (selectReturn = select(sockfd+1, &set, NULL, NULL, &TIMEOUT)) == 1 && (bytesRecieved = recv(sockfd, &charRecieved, 1, 0)) > 0)
     {
         if (charRecieved == 0 || charRecieved == '\n')
         {
@@ -75,7 +82,8 @@ int recieveMessage(char* dest, int sockfd)
 
     printf("Recieved message: %s\n", dest);
 
-    return 0;
+    //Return -1 if there was an error
+    return selectReturn == 1 ? 0 : -1;
 }
 
 int sendFile(char* fileName, int sockfd)
