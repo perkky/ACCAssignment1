@@ -52,12 +52,13 @@ int sendMessage(char* message, int sockfd)
         bytesToSend = bytesToSend >= BUFFER_SIZE ? BUFFER_SIZE : bytesToSend;
         strncpy(buffer, message+i*BUFFER_SIZE, bytesToSend);
 
-        if ((bytesSent = send(sockfd, buffer, BUFFER_SIZE,0)) < bytesToSend)
+        if ((bytesSent = send(sockfd, buffer, bytesToSend,0)) < bytesToSend)
             return -1;
 
         i++;
     }
 
+    printf("Sent message: %s\n", message);
 
     return 0;
 }
@@ -78,6 +79,8 @@ int recieveMessage(char* dest, int sockfd)
         sizeOfMessage -= bytesRead;
     }
 
+    printf("Recieved message: %s\n", dest);
+
     return 0;
 }
 
@@ -93,7 +96,7 @@ int sendFile(char* fileName, int sockfd)
 
     while (( bytesRead = fread(buffer, sizeof(char), BUFFER_SIZE, f)) > 0 )
     {
-        if ( (bytesSent = send(sockfd, buffer, BUFFER_SIZE, 0)) < bytesRead )
+        if ( (bytesSent = send(sockfd, buffer, bytesRead, 0)) < bytesRead )
                 return -1;
         printf("Sent line: %d\n", bytesRead);
     }
