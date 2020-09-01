@@ -11,7 +11,7 @@ void getInput(char* arg1, char* arg2, char* arg3)
     memset(arg3, 0, BUFFER_SIZE);
 
     char temp[BUFFER_SIZE];
-    memset(temp, 0, sizeof(temp));
+    memset(temp, 0, BUFFER_SIZE);
     fgets(temp, BUFFER_SIZE, stdin);
     temp[strcspn(temp, "\n")] = 0;
     printf("%s\n", temp);
@@ -43,7 +43,7 @@ int storeFileClient(char* fileName, int sockfd)
  
     //Get the md5 key and display it
     char buffer[BUFFER_SIZE];
-    memset(buffer, 0, sizeof(buffer));
+    memset(buffer, 0, BUFFER_SIZE);
     recieveMessage(buffer, sockfd);
 
     printf("Key: %s\n", buffer);
@@ -56,6 +56,7 @@ int getFileClient(char* md5, char* fileName, int sockfd)
     sendMessage("GET", sockfd); 
 
     sendMessage(md5, sockfd); 
+    printf("md5: %s\n",md5);
 
     char message[BUFFER_SIZE];
     memset(message, 0, BUFFER_SIZE);
@@ -73,4 +74,19 @@ int getFileClient(char* md5, char* fileName, int sockfd)
         printf("%s\n",message);
         return 1;
     }
+}
+
+int deleteFileClient(char* md5, int sockfd)
+{
+    sendMessage("DELETE", sockfd); 
+
+    sendMessage(md5, sockfd); 
+
+    char buffer[BUFFER_SIZE];
+    memset(buffer, 0, BUFFER_SIZE);
+    recieveMessage(buffer, sockfd);
+
+    printf("%s\n", buffer);
+
+    return 0;
 }

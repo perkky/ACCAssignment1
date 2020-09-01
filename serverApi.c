@@ -8,7 +8,7 @@
 command getCommandFromClient(int sockfd)
 {
     char buffer[BUFFER_SIZE];
-    memset(buffer, 0, sizeof(buffer));
+    memset(buffer, 0, BUFFER_SIZE);
 
     recieveMessage(buffer, sockfd);
     toLower(buffer);
@@ -32,7 +32,7 @@ int storeFileServer(int sockfd)
     recieveFile("storage/test", sockfd);
 
     char md5[BUFFER_SIZE];
-    memset(md5, 0, sizeof(md5));
+    memset(md5, 0, BUFFER_SIZE);
     getMD5Sum("storage/test", md5);
 
     sendMessage(md5, sockfd);
@@ -43,9 +43,9 @@ int storeFileServer(int sockfd)
 int getFileServer(FileList* fileList, int sockfd)
 {
     char md5[BUFFER_SIZE];
-    memset(md5, 0, sizeof(md5));
+    memset(md5, 0, BUFFER_SIZE);
     recieveMessage(md5, sockfd);
-    printf("%s\n",md5);
+    printf("md5: %s\n",md5);
 
     if (!fileExists(fileList, md5))
     {
@@ -63,4 +63,22 @@ int getFileServer(FileList* fileList, int sockfd)
     }
 
     return 0;
+}
+
+int deleteFileServer(FileList* fileList, int sockfd)
+{
+    char md5[BUFFER_SIZE];
+    memset(md5, 0, BUFFER_SIZE);
+    recieveMessage(md5, sockfd);
+
+    if (!fileExists(fileList, md5))
+    {
+        sendMessage("DELETE: Error!\n", sockfd); 
+        return -1;
+    }
+    else
+    {
+        sendMessage("DELETE: File deleted\n", sockfd); 
+        return 0;
+    }
 }
