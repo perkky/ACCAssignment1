@@ -1,7 +1,7 @@
 C = gcc
 CFLAGS = -Wall -std=gnu99
 TARGET = server
-OBJ = server.o FileIO.o ACCSockets.o serverApi.o
+OBJ = server.o FileIO.o ACCSockets.o serverApi.o history.o
 
 all: $(TARGET)
 $(TARGET): $(OBJ)

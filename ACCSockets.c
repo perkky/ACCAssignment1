@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include "ACCSockets.h"
 #include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 struct timeval TIMEOUT;
 
@@ -157,13 +159,18 @@ int listenSocket(int port)
         return -1;
 	}
     len = sizeof(cliaddr);
-    if ( (connfd = accept(listenfd, (SA *) &cliaddr, &len)) < 0 ) {
-        fprintf(stderr, "accept failed\n");
-        return -1;
-    }
-    if( (ptr = inet_ntop(AF_INET, &cliaddr.sin_addr, buff, sizeof(buff))) == NULL) {
-        fprintf(stderr, "inet_ntop error \n");
-        return -1;
+    int forkId = 1;
+    while (forkId != 0)
+    {
+        if ( (connfd = accept(listenfd, (SA *) &cliaddr, &len)) < 0 ) {
+            fprintf(stderr, "accept failed\n");
+            return -1;
+        }
+        if( (ptr = inet_ntop(AF_INET, &cliaddr.sin_addr, buff, sizeof(buff))) == NULL) {
+            fprintf(stderr, "inet_ntop error \n");
+            return -1;
+        }
+        forkId = fork();
     }
 
     return connfd;
