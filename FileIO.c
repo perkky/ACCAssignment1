@@ -21,6 +21,20 @@ void getRandomFileName(char* dest, int len)
 
 }
 
+//See if a file exists
+//Returns 1 if it does, 0 if it doesnt
+int fileExistsClient(char* fileName)
+{
+    FILE* f;
+    if (f = fopen(fileName, "r"))
+    {
+        fclose(f);
+        return 1;
+    }
+
+    return 0;
+}
+
 void toLower(char* str)
 {
     for (int i = 0; i < strlen(str); i++)

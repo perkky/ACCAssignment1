@@ -6,14 +6,26 @@
 #include "FileIO.h"
 #include <unistd.h>
 #include "serverApi.h"
+#include "history.h"
+#include <signal.h>
+  
+FileHistory* g_startHistory = NULL;
 
 //The Server main function
 int main(int argc, char* argv[])
 {
+    signal(SIGCHLD, sig_chld);
+
     FileList fl;
     getStorageFileList(&fl);
     for (int i = 0; i < fl.size; i++)
         printf("%s %s\n",fl.fileList[i], fl.md5List[i]);
+
+    if (g_startHistory == NULL)
+    {
+        g_startHistory = (FileHistory*)malloc(sizeof(FileHistory));
+        initialiseFileHistory(g_startHistory, "temp");
+    }
 
     /*char md5sum[33];*/
     /*getMD5Sum("storage/b", md5sum);*/
@@ -47,18 +59,21 @@ int main(int argc, char* argv[])
                 deleteFileServer(&fl, id);
                 break;
             case HISTORY:
+                historyFileServer(id);
                 break;
             case QUIT:
                 quitServer(id);
                 exit = 1;
                 break;
             case INVALID:
+                exit = 1;
                 break;
             default:
                 break;
         }
     }
 
+    printf("Process ended");
     close(id);
 
     return 0;

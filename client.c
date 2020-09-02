@@ -24,12 +24,13 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    while (true)
+    int returnFlag = SUCCESS;
+    char message[512];
+    memset(message, 0, sizeof(message));
+    while (returnFlag != DISCONNECTED)
     {
-        char message[512];
-        memset(message, 0, sizeof(message));
-        recieveMessage(message, sockfd);
-        printf("Message recieved\n");
+        if (returnFlag == SUCCESS)
+            recieveMessage(message, sockfd);
 
         printf("%s ", message);
 
@@ -37,21 +38,28 @@ int main(int argc, char* argv[])
         /*memset(input, 0, sizeof(input));*/
         /*fgets(input, BUFFER_SIZE, stdin);*/
         char in1[256], in2[256], in3[256];
-        getInput(in1, in2, in3);
+        int numArg = getInput(in1, in2, in3);
         toLower(in1);
-        printf("%s-%s-%s\n", in1, in2, in3);
+        printf("%d\n", numArg);
 
         /*storeFileClient(in2, sockfd);*/
-        if (strncmp("store", in1, 5) == 0)
-            storeFileClient(in2, sockfd);
-        else if (strncmp("get", in1, 3) == 0)
-            getFileClient(in2, in3, sockfd);
-        else if (strncmp("delete", in1, 6) == 0)
-            deleteFileClient(in2, sockfd);
+        if (strncmp("store", in1, 5) == 0 && numArg == 2)
+            returnFlag = storeFileClient(in2, sockfd);
+        else if (strncmp("get", in1, 3) == 0 && numArg == 3)
+            returnFlag = getFileClient(in2, in3, sockfd);
+        else if (strncmp("delete", in1, 6) == 0 && numArg == 2)
+            returnFlag = deleteFileClient(in2, sockfd);
+        else if (strncmp("history", in1, 7) == 0 && numArg == 2)
+            returnFlag = historyFileClient(in2, sockfd);
         else if (strncmp("quit", in1, 4) == 0)
         {
             quitClient(sockfd);
             break;
+        }
+        else
+        {
+            printf("Error: Incorrect arguments\n");
+            returnFlag = INVALID_PARAMETER;
         }
     }
     

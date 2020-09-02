@@ -32,6 +32,7 @@ void sendFileSize(FILE *f, int sockfd)
     send(sockfd, file_size, BUFFER_SIZE,0);
 }
 
+//returns 0 if successful, 1 if unsucessful
 int sendMessage(char* message, int sockfd)
 {
     int bytesSent;
@@ -45,7 +46,7 @@ int sendMessage(char* message, int sockfd)
         if (charToSend == 0 || charToSend == '\n')
             break;
         else if ((bytesSent = send(sockfd, &charToSend, 1,0)) <= 0)
-            return -1;
+            return 1;
     }
     
     //Send 0 to indicate the message is complete
@@ -57,6 +58,8 @@ int sendMessage(char* message, int sockfd)
     return 0;
 }
 
+//returns 0 if successful, 1 if unsuccessful (eg timeout)
+//If the socket is disconnected, a signal is sent and the program is exited
 int recieveMessage(char* dest, int sockfd)
 {
     char charRecieved;
@@ -67,7 +70,7 @@ int recieveMessage(char* dest, int sockfd)
     fd_set set;
     FD_ZERO(&set);
     FD_SET(sockfd, &set);
-    TIMEOUT.tv_sec = 120;
+    TIMEOUT.tv_sec = 10;
 
     while( (selectReturn = select(sockfd+1, &set, NULL, NULL, &TIMEOUT)) == 1 && (bytesRecieved = recv(sockfd, &charRecieved, 1, 0)) > 0)
     {
@@ -84,8 +87,8 @@ int recieveMessage(char* dest, int sockfd)
 
     printf("Recieved message: %s\n", dest);
 
-    //Return -1 if there was an error
-    return selectReturn == 1 ? 0 : -1;
+    //Return 1 if there was an error
+    return selectReturn == 1 ? SUCCESS : DISCONNECTED;
 }
 
 int sendFile(char* fileName, int sockfd)

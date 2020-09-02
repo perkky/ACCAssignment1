@@ -8,6 +8,7 @@ typedef struct FileList
 } FileList;
 
 
+int fileExistsClient(char* fileName);
 void getRandomFileName(char* dest, int len);
 bool fileExists(FileList* fileList, char* md5);
 bool fileExistsName(FileList* fileList, char* fileName);

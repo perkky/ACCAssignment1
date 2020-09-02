@@ -1,5 +1,5 @@
 C = gcc
-CFLAGS = -Wall -std=gnu99
+CFLAGS = -g -Wall -std=gnu99
 TARGET = server
 OBJ = server.o FileIO.o ACCSockets.o serverApi.o history.o
 

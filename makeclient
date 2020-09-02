@@ -1,5 +1,5 @@
 C = gcc
-CFLAGS = -Wall -std=gnu99
+CFLAGS = -g -Wall -std=gnu99
 TARGET = client
 OBJ = client.o FileIO.o ACCSockets.o clientApi.o
 
