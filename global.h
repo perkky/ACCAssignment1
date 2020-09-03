@@ -3,5 +3,5 @@
 #include <semaphore.h>
 //Global variables
 
-FileHistory* g_history;
-sem_t* history_sem;
+extern FileHistory* g_history;
+extern sem_t* history_sem;
