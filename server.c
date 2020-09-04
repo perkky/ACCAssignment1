@@ -8,8 +8,11 @@
 #include "serverApi.h"
 #include "history.h"
 #include <signal.h>
-  
-FileHistory* g_startHistory = NULL;
+#include "global.h"
+#include <sys/mman.h>
+ 
+History* g_history = NULL;
+sem_t* history_sem = NULL;
 
 //The Server main function
 int main(int argc, char* argv[])
@@ -21,17 +24,9 @@ int main(int argc, char* argv[])
     for (int i = 0; i < fl.size; i++)
         printf("%s %s\n",fl.fileList[i], fl.md5List[i]);
 
-    if (g_startHistory == NULL)
-    {
-        g_startHistory = (FileHistory*)malloc(sizeof(FileHistory));
-        initialiseFileHistory(g_startHistory, "temp");
-    }
-
-    /*char md5sum[33];*/
-    /*getMD5Sum("storage/b", md5sum);*/
-    /*if (deleteFile(&fl, "d41d8cd98f00b204e9800998ecf8427e"))*/
-        /*printf("File deleted\n");*/
-    /*printf("%s",md5sum); */
+    createSharedMemory();
+    initialiseHistory(g_history, MAX_NUM_HISTORY);
+    sem_init(history_sem, 1, 1);
 
     int id;
     if ((id = listenSocket(53000)) < 0)

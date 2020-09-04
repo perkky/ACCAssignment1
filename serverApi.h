@@ -15,6 +15,7 @@ typedef enum command
 
 extern FileHistory* g_startHistory;
 
+void createSharedMemory();
 char* getTimeString();
 time_t getTime();
 void sig_chld(int signo);

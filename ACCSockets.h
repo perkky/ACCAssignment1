@@ -2,7 +2,7 @@
 #define	SA struct sockaddr
 #define BUFFER_SIZE 256
 
-enum ReturnVal { SUCCESS, DISCONNECTED, INVALID_PARAMETER, ERROR};
+enum ReturnVal { SUCCESS, DISCONNECTED, INVALID_PARAMETER, ERROR, TIME_OUT};
 
 int listenSocket(int port);
 

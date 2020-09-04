@@ -9,6 +9,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include "global.h"
+#include <sys/mman.h>
 
 void sig_chld(int signo)
 {
@@ -20,12 +21,18 @@ void sig_chld(int signo)
 
 }
 
-/*void createSharedMemory()*/
-/*{*/
-    /*g_history = (FileHistory*)mmap(NULL, sizeof(FileHistory), PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED, -1, 0);*/
-    /*history_sem = (sem_t*)mmap(NULL, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED, -1, 0);*/
+void createSharedMemory()
+{
+    g_history = (History*)mmap(NULL, sizeof(History), PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED,-1,0);
 
-/*}*/
+    g_history->maxSize = MAX_NUM_HISTORY;
+    g_history->size = 0;
+
+
+    history_sem = (sem_t*)mmap(NULL, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED,-1,0);
+
+}
+
 
 time_t getTime()
 {
@@ -100,7 +107,9 @@ int storeFileServer(FileList* fileList, int sockfd)
     getStorageFileList(fileList);
 
 
+    sem_wait(history_sem);
     addHistoryLine(g_history, getTimeString(), md5, "STORE", "127.0.0.1"); 
+    sem_post(history_sem);
 
     return 0;
 }
@@ -111,6 +120,9 @@ int getFileServer(FileList* fileList, int sockfd)
     memset(md5, 0, BUFFER_SIZE);
     recieveMessage(md5, sockfd);
     printf("md5: %s\n",md5);
+
+    freeFileList(fileList);
+    getStorageFileList(fileList);
 
     if (!fileExists(fileList, md5))
     {
@@ -126,7 +138,9 @@ int getFileServer(FileList* fileList, int sockfd)
         addStoragePrefixToFileName(fileName, 0);
         sendFile(fileName, sockfd);
 
+        sem_wait(history_sem);
         addHistoryLine(g_history, getTimeString(), md5, "GET", "127.0.0.1"); 
+        sem_post(history_sem);
     }
 
     return SUCCESS;
@@ -138,6 +152,9 @@ int deleteFileServer(FileList* fileList, int sockfd)
     memset(md5, 0, BUFFER_SIZE);
     recieveMessage(md5, sockfd);
 
+    freeFileList(fileList);
+    getStorageFileList(fileList);
+
     if (!fileExists(fileList, md5))
     {
         sendMessage("DELETE: Error!\n", sockfd); 
@@ -147,7 +164,11 @@ int deleteFileServer(FileList* fileList, int sockfd)
     {
         deleteFile(fileList, md5);
         sendMessage("DELETE: File deleted\n", sockfd); 
+
+        sem_wait(history_sem);
         addHistoryLine(g_history, getTimeString(), md5, "DELETE", "127.0.0.1"); 
+        sem_post(history_sem);
+
         return SUCCESS;
     }
 }
@@ -168,6 +189,8 @@ int historyFileServer(int sockfd)
     {
         sendMessage("exists", sockfd); 
 
+        sem_wait(history_sem);
+
         //send the size of the history
         char historySize[BUFFER_SIZE];
         memset(historySize,0,BUFFER_SIZE);
@@ -176,7 +199,11 @@ int historyFileServer(int sockfd)
         
         for (int i = 0; i < fh->size; i++)
             sendMessage(fh->history[i], sockfd);
+
+        addHistoryLine(g_history, getTimeString(), md5, "HISTORY", "127.0.0.1"); 
         
+        sem_post(history_sem);
+
         return SUCCESS;
     }
 

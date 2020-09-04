@@ -3,24 +3,29 @@
 #include "history.h"
 #include "ACCSockets.h"
 #include <stdio.h>
+#include <sys/mman.h>
 
 //Linked list specifically for history
 //Could have used void pointers, but this is easier
-void initialiseFileHistory(FileHistory* fh, char* id)
+
+void initialiseHistory(History* history, int maxSize)
 {
-    fh->id = (char*)malloc(BUFFER_SIZE*sizeof(char));
-    strcpy(fh->id, id);
-    fh->size = 0;
-    fh->history = NULL;
-    fh->next = NULL;
+    history->history = (FileHistory*)mmap(NULL, maxSize * sizeof(FileHistory), PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED,-1,0);
+
+    for (int i = 0; i < maxSize; i++)
+        history->history[i].size = 0;
+
 }
 
-void addHistoryLine(FileHistory* list, char* time, char* id, char* type, char* ip)
+
+/*Old history*/
+
+void addHistoryLine(History* history, char* time, char* id, char* type, char* ip)
 {
     char line[BUFFER_SIZE];
     memset(line, 0, BUFFER_SIZE);
     createHistoryLine(line, time, id, type, ip);
-    addHistory(list, id, line);
+    addHistory(history, id, line);
 }
 
 void createHistoryLine(char* dest, char* time, char* id, char* type, char* ip)
@@ -28,57 +33,58 @@ void createHistoryLine(char* dest, char* time, char* id, char* type, char* ip)
     sprintf(dest, "%s, %s, %s, %s", time, id, type, ip);
 }
 
-void addHistory(FileHistory* list, char* id, char* history)
+void addHistory(History* history, char* id, char* historyLine)
 {
     FileHistory* fh = NULL;
 
-    if ( (fh = getFileHistory(list, id)) == NULL)
+    if ( (fh = getFileHistory(history, id)) == NULL)
     {
-        fh = createNewFileHistory(list, id);
+        //ran out of room
+        if ( (fh = createNewFileHistory(history, id)) == NULL)
+            return;
+            
+    }
+    
+    //Only add if there is room
+    if (fh->size < MAX_HISTORY_LINES)
+    {
+        strcpy(fh->history[fh->size++], historyLine);
     }
 
-    fh->history = (char**)realloc(fh->history, ++fh->size * sizeof(char*));
-    fh->history[fh->size -1] = (char*)malloc(BUFFER_SIZE*sizeof(char));
-    strcpy(fh->history[fh->size-1], history);
 }
 
 //Loops through the fileHistory list and returns the fh that matches id
 //returns NULL if not found
-FileHistory* getFileHistory(FileHistory* start, char* id)
+FileHistory* getFileHistory(History* history, char* id)
 {
     FileHistory* fh = NULL;
 
-    if (start == NULL)
+    if (history == NULL)
     {
         return NULL;
     }
 
-    do
+    for (int i = 0; i < history->size; i++)
     {
-        if (strcmp(start->id, id) == 0)
-            fh = start;
+        if (strcmp(history->history[i].id, id) == 0)
+        {
+            fh = (history->history+i);
+            break;
+        }
     }
-    while ( (start = start->next) != NULL);
 
     return fh;
 }
 
 //Creates new FileHistory in the list
-FileHistory* createNewFileHistory(FileHistory* start, char* id)
+FileHistory* createNewFileHistory(History* history, char* id)
 {
-    FileHistory* fh = (FileHistory*)malloc(sizeof(FileHistory));
-    initialiseFileHistory(fh, id);
+    FileHistory* fh = NULL;
 
-    if (start == NULL)
-        start = fh;
-    else
+    if (history->size < history->maxSize)
     {
-        while (start->next != NULL)
-        {
-            start = start->next;
-        }
-
-        start->next = fh;
+        fh = (history->history+history->size);
+        strcpy(history->history[history->size++].id, id);
     }
 
     return fh;

@@ -70,7 +70,7 @@ int recieveMessage(char* dest, int sockfd)
     fd_set set;
     FD_ZERO(&set);
     FD_SET(sockfd, &set);
-    TIMEOUT.tv_sec = 10;
+    TIMEOUT.tv_sec = 30;
 
     while( (selectReturn = select(sockfd+1, &set, NULL, NULL, &TIMEOUT)) == 1 && (bytesRecieved = recv(sockfd, &charRecieved, 1, 0)) > 0)
     {
@@ -88,7 +88,7 @@ int recieveMessage(char* dest, int sockfd)
     printf("Recieved message: %s\n", dest);
 
     //Return 1 if there was an error
-    return selectReturn == 1 ? SUCCESS : DISCONNECTED;
+    return selectReturn == 1 ? SUCCESS : TIME_OUT;
 }
 
 int sendFile(char* fileName, int sockfd)
