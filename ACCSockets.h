@@ -1,10 +1,13 @@
 #pragma once
 #define	SA struct sockaddr
 #define BUFFER_SIZE 256
+#include <netinet/in.h>
+
+extern int SOCKET_WAIT_TIME;
 
 enum ReturnVal { SUCCESS, DISCONNECTED, INVALID_PARAMETER, ERROR, TIME_OUT};
 
-int listenSocket(int port);
+int listenSocket(int port, char* returnIp);
 
 int sendFile(char* fileName, int sockfd);
 

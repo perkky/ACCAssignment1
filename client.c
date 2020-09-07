@@ -6,18 +6,27 @@
 #include "clientApi.h"
 #include "FileIO.h"
 #include <signal.h>
+#include <netdb.h>
+
+int SOCKET_WAIT_TIME = 3;
 
 //Client main function
 int main(int argc, char* argv[])
 {
 	if (argc != 3) {
-		printf("usage: a.out <IPaddress> <port>");
+		printf("Usage: ./client <IPaddress> <port>\n");
 		return 1;
 	}
     signal(SIGPIPE, connectionLost);
 
-    int sockfd;
+    struct hostent* host = gethostbyname(argv[1]);
+    char str[512];
+    inet_ntop(AF_INET, &host->h_addr_list[0], str, INET_ADDRSTRLEN);
+    printf("Ip address = %s\n", str);
 
+
+
+    int sockfd;
     if ((sockfd = connectToSocket(argv[1], atoi(argv[2]))) == -1)
     {
         printf("Error connecting to socket\n");
@@ -27,12 +36,29 @@ int main(int argc, char* argv[])
     int returnFlag = SUCCESS;
     char message[512];
     memset(message, 0, sizeof(message));
-    while (returnFlag != DISCONNECTED)
+
+    recieveMessage(message, sockfd);
+
+    //If the server refuses the connection, print the message and quit
+    if (strcmp(message, "connected") != 0)
     {
-        if (returnFlag == SUCCESS)
+        printf("%s\n", message);
+        return 0;
+    }
+
+
+    while (returnFlag != DISCONNECTED && returnFlag != TIME_OUT)
+    {
+        if (returnFlag == SUCCESS || returnFlag == INVALID_PARAMETER)
             recieveMessage(message, sockfd);
 
         printf("%s ", message);
+
+        if (strncmp(message, "Client", 6) == 0)
+        {
+            printf("\n");
+            return 0;
+        }
 
         /*char input[BUFFER_SIZE];*/
         /*memset(input, 0, sizeof(input));*/
@@ -40,7 +66,6 @@ int main(int argc, char* argv[])
         char in1[256], in2[256], in3[256];
         int numArg = getInput(in1, in2, in3);
         toLower(in1);
-        printf("%d\n", numArg);
 
         /*storeFileClient(in2, sockfd);*/
         if (strncmp("store", in1, 5) == 0 && numArg == 2)
@@ -59,8 +84,11 @@ int main(int argc, char* argv[])
         else
         {
             printf("Error: Incorrect arguments\n");
-            returnFlag = INVALID_PARAMETER;
+            returnFlag = ERROR;
         }
+
+        if (returnFlag == TIME_OUT)
+            printf("Error: Lost connection to host\n");
     }
     
     close(sockfd);

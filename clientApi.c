@@ -25,7 +25,6 @@ int getInput(char* arg1, char* arg2, char* arg3)
     memset(temp, 0, BUFFER_SIZE);
     fgets(temp, BUFFER_SIZE, stdin);
     temp[strcspn(temp, "\n")] = 0;
-    printf("%s\n", temp);
 
     int i = 0;
     int idx1 = 0, idx2 = 0, idx3 = 0;
@@ -56,8 +55,8 @@ int quitClient(int sockfd)
     sendMessage("QUIT", sockfd); 
 
     char message[BUFFER_SIZE];
-    if (recieveMessage(message, sockfd) == DISCONNECTED)
-        return DISCONNECTED;
+    if (recieveMessage(message, sockfd) == TIME_OUT)
+        return TIME_OUT;
 
     printf("%s\n", message);
     return SUCCESS;
@@ -68,7 +67,7 @@ int storeFileClient(char* fileName, int sockfd)
     if (!fileExistsClient(fileName))
     {
         printf("Error: File does not exist\n");
-        return INVALID_PARAMETER;
+        return ERROR;
     }
     //Send the command to the server
     sendMessage("STORE", sockfd); 
@@ -78,8 +77,8 @@ int storeFileClient(char* fileName, int sockfd)
     //Get the md5 key and display it
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
-    if (recieveMessage(buffer, sockfd) == DISCONNECTED)
-        return DISCONNECTED;
+    if (recieveMessage(buffer, sockfd) == TIME_OUT)
+        return TIME_OUT;
 
     printf("Key: %s\n", buffer);
 
@@ -91,13 +90,11 @@ int getFileClient(char* md5, char* fileName, int sockfd)
     sendMessage("GET", sockfd); 
 
     sendMessage(md5, sockfd); 
-    printf("md5: %s\n",md5);
 
     char message[BUFFER_SIZE];
     memset(message, 0, BUFFER_SIZE);
-    if (recieveMessage(message, sockfd) == DISCONNECTED)
-        return DISCONNECTED;
-    printf("%s\n",message);
+    if (recieveMessage(message, sockfd) == TIME_OUT)
+        return TIME_OUT;
 
     //If the file exists
     if (strncmp("exists",message,6) == 0)
@@ -108,7 +105,7 @@ int getFileClient(char* md5, char* fileName, int sockfd)
     else
     {
         printf("%s\n",message);
-        return SUCCESS;
+        return INVALID_PARAMETER;
     }
 }
 
@@ -120,8 +117,8 @@ int deleteFileClient(char* md5, int sockfd)
 
     char buffer[BUFFER_SIZE];
     memset(buffer, 0, BUFFER_SIZE);
-    if (recieveMessage(buffer, sockfd) == DISCONNECTED)
-        return DISCONNECTED;
+    if (recieveMessage(buffer, sockfd) == TIME_OUT)
+        return TIME_OUT;
 
     printf("%s\n", buffer);
 
@@ -135,22 +132,22 @@ int historyFileClient(char* md5, int sockfd)
 
     char message[BUFFER_SIZE];
     memset(message, 0, BUFFER_SIZE);
-    if (recieveMessage(message, sockfd) == DISCONNECTED)
-        return DISCONNECTED;
+    if (recieveMessage(message, sockfd) == TIME_OUT)
+        return TIME_OUT;
 
     //If the file exists
     if (strncmp("exists",message,6) == 0)
     {
         memset(message, 0, BUFFER_SIZE);
-        if (recieveMessage(message, sockfd) == DISCONNECTED)
-            return DISCONNECTED;
+        if (recieveMessage(message, sockfd) == TIME_OUT)
+            return TIME_OUT;
         int size = atoi(message);
 
         for (int i = 0; i < size; i++)
         {
             memset(message, 0, BUFFER_SIZE);
-            if (recieveMessage(message, sockfd) == DISCONNECTED)
-                return DISCONNECTED; 
+            if (recieveMessage(message, sockfd) == TIME_OUT)
+                return TIME_OUT; 
 
             printf("%s\n", message);
         }
@@ -161,6 +158,6 @@ int historyFileClient(char* md5, int sockfd)
     else
     {
         printf("%s\n",message);
-        return SUCCESS;
+        return INVALID_PARAMETER;
     }
 }

@@ -15,22 +15,6 @@
 
 struct timeval TIMEOUT;
 
-void sendFileSize(FILE *f, int sockfd)
-{
-    int fileSize = 0;
-
-    fseek(f, 0L, SEEK_END);
-    fileSize = ftell(f);
-    rewind(f);
-
-    char file_size[BUFFER_SIZE];
-    sprintf(file_size, "%d", fileSize);
-
-    printf("File size: %d\n",fileSize);
-    printf("File size: %s\n",file_size);
-
-    send(sockfd, file_size, BUFFER_SIZE,0);
-}
 
 //returns 0 if successful, 1 if unsucessful
 int sendMessage(char* message, int sockfd)
@@ -70,7 +54,7 @@ int recieveMessage(char* dest, int sockfd)
     fd_set set;
     FD_ZERO(&set);
     FD_SET(sockfd, &set);
-    TIMEOUT.tv_sec = 30;
+    TIMEOUT.tv_sec = SOCKET_WAIT_TIME;
 
     while( (selectReturn = select(sockfd+1, &set, NULL, NULL, &TIMEOUT)) == 1 && (bytesRecieved = recv(sockfd, &charRecieved, 1, 0)) > 0)
     {
@@ -84,8 +68,6 @@ int recieveMessage(char* dest, int sockfd)
             *(dest + i++) = charRecieved;
 
     }
-
-    printf("Recieved message: %s\n", dest);
 
     //Return 1 if there was an error
     return selectReturn == 1 ? SUCCESS : TIME_OUT;
@@ -128,7 +110,7 @@ int recieveFile(char* fileName, int sockfd)
     return fclose(f);
 }
 
-int listenSocket(int port)
+int listenSocket(int port, char* returnIp)
 {
 	int			listenfd, connfd;
 	socklen_t		len;
@@ -176,6 +158,8 @@ int listenSocket(int port)
         forkId = fork();
     }
 
+    strcpy(returnIp, buff);
+
     return connfd;
 }
 
@@ -186,7 +170,7 @@ int connectToSocket(char* ip_addr, int port)
 
 
 	if ( (sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-		printf("socket error");
+		printf("Socket error\n");
 		return -1;
 	}
 
@@ -194,12 +178,12 @@ int connectToSocket(char* ip_addr, int port)
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_port   = htons(port);	/* daytime server */
 	if (inet_pton(AF_INET, ip_addr, &servaddr.sin_addr) <= 0){
-		printf("inet_pton error for %s", ip_addr);
+		printf("Inet_pton error for %s\n", ip_addr);
 		return -1;
 	}
 
 	if (connect(sockfd, (SA *) &servaddr, sizeof(servaddr)) < 0) {
-		printf("connect error");
+		printf("Connection error\n");
 		return -1; 
 	}
 

@@ -27,9 +27,13 @@ void createSharedMemory()
 
     g_history->maxSize = MAX_NUM_HISTORY;
     g_history->size = 0;
+    g_ipList = (IpList*)mmap(NULL, sizeof(IpList), PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED,-1,0);
+
+
 
 
     history_sem = (sem_t*)mmap(NULL, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED,-1,0);
+    ipList_sem = (sem_t*)mmap(NULL, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED,-1,0);
 
 }
 
@@ -58,7 +62,7 @@ command getCommandFromClient(int sockfd)
     memset(buffer, 0, BUFFER_SIZE);
 
     //If 1 is returned, timeout has been reached
-    if (recieveMessage(buffer, sockfd) == 1)
+    if (recieveMessage(buffer, sockfd) == TIME_OUT)
         return INVALID;
 
     toLower(buffer);
@@ -81,10 +85,10 @@ int quitServer(int sockfd)
 {
     sendMessage("Thank you for using our anonymous storage", sockfd);
 
-    return 0;
+    return SUCCESS;
 }
 
-int storeFileServer(FileList* fileList, int sockfd)
+int storeFileServer(FileList* fileList, char* ip, int sockfd)
 {
     char fileName[BUFFER_SIZE];
     memset(fileName, 0, BUFFER_SIZE);
@@ -108,17 +112,18 @@ int storeFileServer(FileList* fileList, int sockfd)
 
 
     sem_wait(history_sem);
-    addHistoryLine(g_history, getTimeString(), md5, "STORE", "127.0.0.1"); 
+    addHistoryLine(g_history, getTimeString(), md5, "STORE", ip); 
     sem_post(history_sem);
 
-    return 0;
+    return SUCCESS;
 }
 
-int getFileServer(FileList* fileList, int sockfd)
+int getFileServer(FileList* fileList, char* ip, int sockfd)
 {
     char md5[BUFFER_SIZE];
     memset(md5, 0, BUFFER_SIZE);
-    recieveMessage(md5, sockfd);
+    if (recieveMessage(md5, sockfd) == TIME_OUT)
+        return INVALID;
     printf("md5: %s\n",md5);
 
     freeFileList(fileList);
@@ -139,18 +144,19 @@ int getFileServer(FileList* fileList, int sockfd)
         sendFile(fileName, sockfd);
 
         sem_wait(history_sem);
-        addHistoryLine(g_history, getTimeString(), md5, "GET", "127.0.0.1"); 
+        addHistoryLine(g_history, getTimeString(), md5, "GET", ip); 
         sem_post(history_sem);
     }
 
     return SUCCESS;
 }
 
-int deleteFileServer(FileList* fileList, int sockfd)
+int deleteFileServer(FileList* fileList, char* ip, int sockfd)
 {
     char md5[BUFFER_SIZE];
     memset(md5, 0, BUFFER_SIZE);
-    recieveMessage(md5, sockfd);
+    if (recieveMessage(md5, sockfd) == TIME_OUT)
+        return INVALID;
 
     freeFileList(fileList);
     getStorageFileList(fileList);
@@ -166,23 +172,31 @@ int deleteFileServer(FileList* fileList, int sockfd)
         sendMessage("DELETE: File deleted\n", sockfd); 
 
         sem_wait(history_sem);
-        addHistoryLine(g_history, getTimeString(), md5, "DELETE", "127.0.0.1"); 
+        addHistoryLine(g_history, getTimeString(), md5, "DELETE", ip); 
         sem_post(history_sem);
 
         return SUCCESS;
     }
 }
 
-int historyFileServer(int sockfd)
+int historyFileServer(FileList* fileList, char* ip, int sockfd)
 {
     char md5[BUFFER_SIZE];
     memset(md5, 0, BUFFER_SIZE);
-    recieveMessage(md5, sockfd);
+    if (recieveMessage(md5, sockfd) == TIME_OUT)
+        return INVALID;
+
+    freeFileList(fileList);
+    getStorageFileList(fileList);
 
     FileHistory* fh = getFileHistory(g_history, md5);
     if ( fh == NULL)
     {
         sendMessage("GET: Error! Hash key is not valid", sockfd); 
+
+        if (fileExists(fileList, md5))
+            addHistoryLine(g_history, getTimeString(), md5, "HISTORY", ip); 
+
         return INVALID_PARAMETER;
     }
     else
@@ -200,7 +214,7 @@ int historyFileServer(int sockfd)
         for (int i = 0; i < fh->size; i++)
             sendMessage(fh->history[i], sockfd);
 
-        addHistoryLine(g_history, getTimeString(), md5, "HISTORY", "127.0.0.1"); 
+        addHistoryLine(g_history, getTimeString(), md5, "HISTORY", ip); 
         
         sem_post(history_sem);
 
