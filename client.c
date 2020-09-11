@@ -6,7 +6,6 @@
 #include "clientApi.h"
 #include "FileIO.h"
 #include <signal.h>
-#include <netdb.h>
 
 int SOCKET_WAIT_TIME = 3;
 
@@ -14,29 +13,30 @@ int SOCKET_WAIT_TIME = 3;
 int main(int argc, char* argv[])
 {
 	if (argc != 3) {
-		printf("Usage: ./client <IPaddress> <port>\n");
+		printf("Usage: ./client <IPaddress/hostname> <port>\n");
 		return 1;
 	}
     signal(SIGPIPE, connectionLost);
 
-    struct hostent* host = gethostbyname(argv[1]);
-    char str[512];
-    inet_ntop(AF_INET, &host->h_addr_list[0], str, INET_ADDRSTRLEN);
-    printf("Ip address = %s\n", str);
-
-
+    char ip[BUFFER_SIZE];
+    if (getIpAddr(argv[1], ip) != 0)
+    {
+        printf("Error: Unable to resolve hostname\n");
+        return 1;
+    }
 
     int sockfd;
-    if ((sockfd = connectToSocket(argv[1], atoi(argv[2]))) == -1)
+    if ((sockfd = connectToSocket(ip, atoi(argv[2]))) == -1)
     {
         printf("Error connecting to socket\n");
         return 1;
     }
 
     int returnFlag = SUCCESS;
-    char message[512];
+    char message[BUFFER_SIZE];
     memset(message, 0, sizeof(message));
 
+    //Get the message from the server to make sure the client has been connected
     recieveMessage(message, sockfd);
 
     //If the server refuses the connection, print the message and quit
@@ -54,20 +54,17 @@ int main(int argc, char* argv[])
 
         printf("%s ", message);
 
+        //If the message begins with "Client", it means the client has been rejected
         if (strncmp(message, "Client", 6) == 0)
         {
             printf("\n");
             return 0;
         }
 
-        /*char input[BUFFER_SIZE];*/
-        /*memset(input, 0, sizeof(input));*/
-        /*fgets(input, BUFFER_SIZE, stdin);*/
-        char in1[256], in2[256], in3[256];
+        char in1[BUFFER_SIZE], in2[BUFFER_SIZE], in3[BUFFER_SIZE];
         int numArg = getInput(in1, in2, in3);
         toLower(in1);
 
-        /*storeFileClient(in2, sockfd);*/
         if (strncmp("store", in1, 5) == 0 && numArg == 2)
             returnFlag = storeFileClient(in2, sockfd);
         else if (strncmp("get", in1, 3) == 0 && numArg == 3)
@@ -88,7 +85,9 @@ int main(int argc, char* argv[])
         }
 
         if (returnFlag == TIME_OUT)
+        {
             printf("Error: Lost connection to host\n");
+        }
     }
     
     close(sockfd);

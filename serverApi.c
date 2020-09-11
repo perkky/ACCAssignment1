@@ -10,6 +10,7 @@
 #include <time.h>
 #include "global.h"
 #include <sys/mman.h>
+#include <stdlib.h>
 
 void sig_chld(int signo)
 {
@@ -21,6 +22,7 @@ void sig_chld(int signo)
 
 }
 
+//Create the shared memory between each process
 void createSharedMemory()
 {
     g_history = (History*)mmap(NULL, sizeof(History), PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED,-1,0);
@@ -37,12 +39,21 @@ void createSharedMemory()
 
 }
 
+void destroySharedMemory()
+{
+    munmap(g_history, sizeof(History*));
+    munmap(g_ipList, sizeof(IpList*));
+    munmap(history_sem, sizeof(sem_t)); 
+    munmap(ipList_sem, sizeof(sem_t)); 
+}
+
 
 time_t getTime()
 {
     return time(NULL);
 }
 
+//This function returns the current time as a string
 char* getTimeString()
 {
     time_t time = getTime();
@@ -56,6 +67,8 @@ char* getTimeString()
 
 }
 
+/* This function waits for a message from the client and returns the command.
+ */
 command getCommandFromClient(int sockfd)
 {
     char buffer[BUFFER_SIZE];
@@ -81,6 +94,7 @@ command getCommandFromClient(int sockfd)
         return INVALID;
 }
 
+//The function to be run when the client requests 'Quit'
 int quitServer(int sockfd)
 {
     sendMessage("Thank you for using our anonymous storage", sockfd);
@@ -88,6 +102,10 @@ int quitServer(int sockfd)
     return SUCCESS;
 }
 
+
+/* This function is run when the client requests to store a file.
+ * It saves the sent file as a random file name and adds it to
+ * the history and SUCCESS is returned. */
 int storeFileServer(FileList* fileList, char* ip, int sockfd)
 {
     char fileName[BUFFER_SIZE];
@@ -118,20 +136,26 @@ int storeFileServer(FileList* fileList, char* ip, int sockfd)
     return SUCCESS;
 }
 
+/* This function is run when the client requests to get a file.
+ * If the file is not found, it returns an error message to the client
+ * and INVALID_PARAMETER is returned.
+ * If the files is found, it sends the file to the client and SUCCESS
+ * is returned.*/
 int getFileServer(FileList* fileList, char* ip, int sockfd)
 {
     char md5[BUFFER_SIZE];
     memset(md5, 0, BUFFER_SIZE);
     if (recieveMessage(md5, sockfd) == TIME_OUT)
         return INVALID;
-    printf("md5: %s\n",md5);
 
     freeFileList(fileList);
     getStorageFileList(fileList);
 
     if (!fileExists(fileList, md5))
     {
-        sendMessage("GET: Error! Hash key is not valid", sockfd); 
+        char dest[2*BUFFER_SIZE];
+        sprintf(dest,"GET: Error! Hash %s is not valid", md5);
+        sendMessage(dest, sockfd); 
         return INVALID_PARAMETER;
     }
     else
@@ -151,6 +175,10 @@ int getFileServer(FileList* fileList, char* ip, int sockfd)
     return SUCCESS;
 }
 
+/* This function is run when the client requests to delete a file.
+ * If the file is not found, an error message is sent to the client
+ * and INVALID_PARAMETER is returned.
+ * If the file is found, it is deleted and SUCCESS is returned.*/
 int deleteFileServer(FileList* fileList, char* ip, int sockfd)
 {
     char md5[BUFFER_SIZE];
@@ -163,13 +191,17 @@ int deleteFileServer(FileList* fileList, char* ip, int sockfd)
 
     if (!fileExists(fileList, md5))
     {
-        sendMessage("DELETE: Error!\n", sockfd); 
+        char dest[2*BUFFER_SIZE];
+        sprintf(dest,"DELETE: Error! Hash %s is not valid", md5);
+        sendMessage(dest, sockfd); 
         return INVALID_PARAMETER;
     }
     else
     {
         deleteFile(fileList, md5);
-        sendMessage("DELETE: File deleted\n", sockfd); 
+        char dest[2*BUFFER_SIZE];
+        sprintf(dest,"DELETE: File with hash %s has been deleted", md5);
+        sendMessage(dest, sockfd); 
 
         sem_wait(history_sem);
         addHistoryLine(g_history, getTimeString(), md5, "DELETE", ip); 
@@ -179,6 +211,10 @@ int deleteFileServer(FileList* fileList, char* ip, int sockfd)
     }
 }
 
+/* This function is run when the client requests to get the history of a file.
+ * If the file is not found, an error message is sent to the client
+ * and INVALID_PARAMETER is returned.
+ * If the file is found, it is the history of the file is sent and SUCCESS is returned.*/
 int historyFileServer(FileList* fileList, char* ip, int sockfd)
 {
     char md5[BUFFER_SIZE];
@@ -192,7 +228,9 @@ int historyFileServer(FileList* fileList, char* ip, int sockfd)
     FileHistory* fh = getFileHistory(g_history, md5);
     if ( fh == NULL)
     {
-        sendMessage("GET: Error! Hash key is not valid", sockfd); 
+        char dest[2*BUFFER_SIZE];
+        sprintf(dest,"HISTORY: Error! There is not history for hash %s", md5);
+        sendMessage(dest, sockfd); 
 
         if (fileExists(fileList, md5))
             addHistoryLine(g_history, getTimeString(), md5, "HISTORY", ip); 

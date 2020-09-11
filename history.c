@@ -5,9 +5,7 @@
 #include <stdio.h>
 #include <sys/mman.h>
 
-//Linked list specifically for history
-//Could have used void pointers, but this is easier
-
+/* Initialise a History struct */
 void initialiseHistory(History* history, int maxSize)
 {
     history->history = (FileHistory*)mmap(NULL, maxSize * sizeof(FileHistory), PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED,-1,0);
@@ -17,9 +15,7 @@ void initialiseHistory(History* history, int maxSize)
 
 }
 
-
-/*Old history*/
-
+/* Creates a history line and add it to the history struct */
 void addHistoryLine(History* history, char* time, char* id, char* type, char* ip)
 {
     char line[BUFFER_SIZE];
@@ -28,11 +24,14 @@ void addHistoryLine(History* history, char* time, char* id, char* type, char* ip
     addHistory(history, id, line);
 }
 
+/* Create a history string */
 void createHistoryLine(char* dest, char* time, char* id, char* type, char* ip)
 {
     sprintf(dest, "%s, %s, %s, %s", time, id, type, ip);
 }
 
+/* Adds a line to a files history. If no history exists for a file,
+ * create one and add it. */
 void addHistory(History* history, char* id, char* historyLine)
 {
     FileHistory* fh = NULL;
@@ -53,8 +52,8 @@ void addHistory(History* history, char* id, char* historyLine)
 
 }
 
-//Loops through the fileHistory list and returns the fh that matches id
-//returns NULL if not found
+/* Loops through the fileHistory list and returns the FileHistory that matches id.
+ * Returns NULL if not found*/
 FileHistory* getFileHistory(History* history, char* id)
 {
     FileHistory* fh = NULL;
@@ -76,7 +75,7 @@ FileHistory* getFileHistory(History* history, char* id)
     return fh;
 }
 
-//Creates new FileHistory in the list
+//Creates a new FileHistory node in the list.
 FileHistory* createNewFileHistory(History* history, char* id)
 {
     FileHistory* fh = NULL;

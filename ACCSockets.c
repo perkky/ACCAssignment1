@@ -16,7 +16,10 @@
 struct timeval TIMEOUT;
 
 
-//returns 0 if successful, 1 if unsucessful
+/* Sends a message to socket with sockfd
+ * This sends the whole message, only stopping at a new line character or 0.
+ * Once the message has been sent, 0 is sent to indicate it is finished.
+ * Returns SUCCESS if successful and ERROR if an error occurs*/
 int sendMessage(char* message, int sockfd)
 {
     int bytesSent;
@@ -30,20 +33,22 @@ int sendMessage(char* message, int sockfd)
         if (charToSend == 0 || charToSend == '\n')
             break;
         else if ((bytesSent = send(sockfd, &charToSend, 1,0)) <= 0)
-            return 1;
+            return ERROR;
     }
     
     //Send 0 to indicate the message is complete
     char null = 0;
     send(sockfd, &null, 1,0);
 
-    printf("Sent message: %s\n", message);
 
-    return 0;
+    return SUCCESS;
 }
 
-//returns 0 if successful, 1 if unsuccessful (eg timeout)
-//If the socket is disconnected, a signal is sent and the program is exited
+/* Recieves a message from the socket socfd.
+ * This continues to read characters from the socket until it reaches a 0,
+ * as this indicates the end of the message has been reached.
+ * select() is used to timout this if no respone is given in SOCKET_WAIT_TIME.
+ * Returns SUCCESS if successful and TIME_OUT if it timesout. */
 int recieveMessage(char* dest, int sockfd)
 {
     char charRecieved;
@@ -73,6 +78,7 @@ int recieveMessage(char* dest, int sockfd)
     return selectReturn == 1 ? SUCCESS : TIME_OUT;
 }
 
+/* Functions the same as sendMessage(), however it sends a file instead. */
 int sendFile(char* fileName, int sockfd)
 {
     FILE* f = fopen(fileName, "r");
@@ -93,6 +99,7 @@ int sendFile(char* fileName, int sockfd)
     return fclose(f);
 }
 
+/* Functions the same as recieveMessage(), however it recieves a file instead. */
 int recieveFile(char* fileName, int sockfd)
 {
     FILE* f = fopen(fileName, "w");
@@ -110,6 +117,8 @@ int recieveFile(char* fileName, int sockfd)
     return fclose(f);
 }
 
+/* Listens on a port. If a connection is created, fork() is called
+ * and one process' function returns whilst the other continues to listen. */
 int listenSocket(int port, char* returnIp)
 {
 	int			listenfd, connfd;
@@ -163,6 +172,7 @@ int listenSocket(int port, char* returnIp)
     return connfd;
 }
 
+/* Connects to a socket */
 int connectToSocket(char* ip_addr, int port)
 {
 	int	sockfd;

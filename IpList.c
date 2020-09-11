@@ -1,12 +1,14 @@
 #include "IpList.h"
 #include <string.h>
 
+/* Initialise an IpList struct*/
 void initialiseIpList(IpList* ipList, int timeoutLength)
 {
     ipList->size = 0;
     ipList->timeoutLength = timeoutLength;
 }
 
+/* Add an Ip that needs to be blocked */
 void addIp(IpList* ipList, char* ip, int time)
 {
     if (ipList->size < MAX_IP_SIZE)
@@ -16,6 +18,8 @@ void addIp(IpList* ipList, char* ip, int time)
     } 
 }
 
+/* Shuffle down ip. When an Ip is removed from the IpLIst, it must be shuffled down
+ * to create room for more ips.*/
 void shuffleDown(IpList* ipList, int idx)
 {
     //if you want to delete the last element
@@ -37,6 +41,7 @@ void shuffleDown(IpList* ipList, int idx)
 
 }
 
+/* Check every ip to see if the timeout time has expired and remove it if it has. */
 void checkIp(IpList* ipList, int time)
 {
     for (int i = 0; i < ipList->size; i++)
@@ -51,6 +56,7 @@ void checkIp(IpList* ipList, int time)
     }
 }
 
+/* Check if an ip is banned or not. Calling this also calls checkIp() to check every ip. */
 int isIpBanned(IpList* ipList, char* ip, int time)
 {
     checkIp(ipList, time);

@@ -31,14 +31,16 @@ int main(int argc, char* argv[])
     MAX_NUM_INVALID = atoi(argv[1]);
     TIMEOUT_TIME = atoi(argv[2]);
     SOCKET_WAIT_TIME = atoi(argv[3]);
+    if (MAX_NUM_INVALID < 1 || TIMEOUT_TIME < 1 || SOCKET_WAIT_TIME < 1)
+    {
+        printf("Error: k >= 1, t1 >= 1, t2 >= 1\n");
+        return 1;
+    }
 
     signal(SIGCHLD, sig_chld);
 
     FileList fl;
     getStorageFileList(&fl);
-    for (int i = 0; i < fl.size; i++)
-        printf("%s %s\n",fl.fileList[i], fl.md5List[i]);
-
     createSharedMemory();
     initialiseHistory(g_history, MAX_NUM_HISTORY);
     initialiseIpList(g_ipList, TIMEOUT_TIME);
@@ -67,7 +69,6 @@ int main(int argc, char* argv[])
     while (!exit)
     {
         sendMessage("18811931> ", id);
-        printf("message sent\n");
 
         //Get command
         switch (getCommandFromClient(id))
@@ -117,7 +118,7 @@ int main(int argc, char* argv[])
         }
     }
 
-    printf("Process ended");
+    freeFileList(&fl);
     close(id);
 
     return 0;

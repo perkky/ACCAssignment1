@@ -1,5 +1,6 @@
 #pragma once
 
+int getIpAddr(char* inIpOrHost, char* outIp);
 int quitClient(int sockfd);
 void connectionLost(int signo);
 int storeFileClient(char* fileName, int sockfd);
