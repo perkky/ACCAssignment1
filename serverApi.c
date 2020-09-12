@@ -111,6 +111,8 @@ int storeFileServer(FileList* fileList, char* ip, int sockfd)
     char fileName[BUFFER_SIZE];
     memset(fileName, 0, BUFFER_SIZE);
     getRandomFileName(fileName, 5);
+    freeFileList(fileList);
+    getStorageFileList(fileList);
 
     while (fileExistsName(fileList, fileName))
         getRandomFileName(fileName, 5);
@@ -123,7 +125,16 @@ int storeFileServer(FileList* fileList, char* ip, int sockfd)
 
     getMD5Sum(fileName, md5);
 
-    sendMessage(md5, sockfd);
+    //If file already exists, delete it
+    if (fileExists(fileList, md5))
+    {
+        deleteFile(fileList, md5);
+    }
+
+    char dest[2*BUFFER_SIZE];
+    sprintf(dest,"STORE: File has been stored with hash %s", md5);
+
+    sendMessage(dest, sockfd);
     
     freeFileList(fileList);
     getStorageFileList(fileList);

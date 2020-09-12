@@ -127,7 +127,7 @@ int storeFileClient(char* fileName, int sockfd)
     if (recieveMessage(buffer, sockfd) == TIME_OUT)
         return TIME_OUT;
 
-    printf("Key: %s\n", buffer);
+    printf("%s\n", buffer);
 
     return SUCCESS;
 }
