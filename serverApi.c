@@ -36,6 +36,7 @@ void createSharedMemory()
 
     history_sem = (sem_t*)mmap(NULL, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED,-1,0);
     ipList_sem = (sem_t*)mmap(NULL, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED,-1,0);
+    file_sem = (sem_t*)mmap(NULL, sizeof(sem_t), PROT_READ|PROT_WRITE, MAP_ANONYMOUS|MAP_SHARED,-1,0);
 
 }
 
@@ -45,6 +46,7 @@ void destroySharedMemory()
     munmap(g_ipList, sizeof(IpList*));
     munmap(history_sem, sizeof(sem_t)); 
     munmap(ipList_sem, sizeof(sem_t)); 
+    munmap(file_sem, sizeof(sem_t)); 
 }
 
 
@@ -176,7 +178,10 @@ int getFileServer(FileList* fileList, char* ip, int sockfd)
         char fileName[BUFFER_SIZE];
         getFileName(fileList, md5, fileName);
         addStoragePrefixToFileName(fileName, 0);
+
+        sem_wait(file_sem);
         sendFile(fileName, sockfd);
+        sem_post(file_sem);
 
         sem_wait(history_sem);
         addHistoryLine(g_history, getTimeString(), md5, "GET", ip); 
@@ -209,7 +214,9 @@ int deleteFileServer(FileList* fileList, char* ip, int sockfd)
     }
     else
     {
+        sem_wait(file_sem);
         deleteFile(fileList, md5);
+        sem_post(file_sem);
         char dest[2*BUFFER_SIZE];
         sprintf(dest,"DELETE: File with hash %s has been deleted", md5);
         sendMessage(dest, sockfd); 

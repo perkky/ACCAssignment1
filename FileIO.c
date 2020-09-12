@@ -100,7 +100,6 @@ bool deleteFile(FileList* fileList, char* md5)
         {
             strcpy(fileName, fileList->fileList[i]);
             addStoragePrefixToFileName(fileName, 0);
-            printf("%s\n",fileName);
             remove(fileName);
             return true;
         }

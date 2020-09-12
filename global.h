@@ -12,3 +12,4 @@ extern History* g_history;
 extern IpList* g_ipList;
 extern sem_t* history_sem;
 extern sem_t* ipList_sem;
+extern sem_t* file_sem;
