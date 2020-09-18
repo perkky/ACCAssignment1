@@ -15,6 +15,17 @@
 
 struct timeval TIMEOUT;
 
+int getFileSize(char* fileName)
+{
+    int size = 0;
+    FILE* fp = fopen(fileName, "r");
+    fseek(fp, 0L, SEEK_END);
+
+    size = (int)ftell(fp);
+
+    return size;
+}
+
 
 /* Sends a message to socket with sockfd
  * This sends the whole message, only stopping at a new line character or 0.
@@ -81,6 +92,12 @@ int recieveMessage(char* dest, int sockfd)
 /* Functions the same as sendMessage(), however it sends a file instead. */
 int sendFile(char* fileName, int sockfd)
 {
+    int fileSize = getFileSize(fileName);
+    //send the file size
+    char fileSizeStr[BUFFER_SIZE];
+    sprintf(fileSizeStr, "%d", fileSize);
+    sendMessage(fileSizeStr, sockfd);
+    
     FILE* f = fopen(fileName, "r");
     int bytesRead;
 
@@ -92,9 +109,6 @@ int sendFile(char* fileName, int sockfd)
                 return -1;
     }
 
-    //Send 0 to indicate the message is complete
-    char null = 0;
-    send(sockfd, &null, 1, 0); 
 
     return fclose(f);
 }
@@ -104,13 +118,16 @@ int recieveFile(char* fileName, int sockfd)
 {
     FILE* f = fopen(fileName, "w");
 
+    //recieve file size
+    char fileSizeStr[BUFFER_SIZE];
+    recieveMessage(fileSizeStr, sockfd);
+    int fileSize = atoi(fileSizeStr);
+
     char charRecieved;
     int bytesRead;
 
-    while((bytesRead = recv(sockfd, &charRecieved, 1, 0)) > 0)
+    while(fileSize-- > 0 && (bytesRead = recv(sockfd, &charRecieved, 1, 0)) > 0)
     {
-        if (charRecieved == 0)
-            break;
         fwrite(&charRecieved, sizeof(char), 1, f);
     }
 
